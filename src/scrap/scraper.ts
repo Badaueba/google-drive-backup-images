@@ -2,6 +2,7 @@ import puppeteerExtra from "puppeteer-extra";
 import { Browser, Page } from "puppeteer";
 import extra from "puppeteer-extra-plugin-stealth";
 import { login } from ".";
+import { scrapFolder } from "./scrap-folder";
 
 puppeteerExtra.use(extra());
 
@@ -31,8 +32,10 @@ export class Scraper {
         const page: Page = await this.browser.newPage();
         await page.goto(this.url);
         await login(page);
+        await scrapFolder(page);
 
         await page.waitFor(20_000);
+        // await page.waitFor(180_000);
         await page.close();
         await this.browser.close();
     }
