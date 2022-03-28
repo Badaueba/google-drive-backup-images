@@ -4,6 +4,8 @@ import extra from "puppeteer-extra-plugin-stealth";
 import { login } from ".";
 import { scrapFolder } from "./scrap-folder";
 
+const background = process.env["background_task"] === "true" ? true : false;
+console.log("bak", background);
 puppeteerExtra.use(extra());
 
 export class Scraper {
@@ -12,7 +14,7 @@ export class Scraper {
 
     private async launch() {
         this.browser = await puppeteerExtra.launch({
-            headless: false,
+            headless: background,
             args: [
                 "--no-sandbox",
                 "--disable-setuid-sandbox",
@@ -22,7 +24,7 @@ export class Scraper {
                 "--ignore-certifcate-errors-spki-list",
             ],
 
-            ignoreHTTPSErrors: true,
+            ignoreHTTPSErrors: false,
             userDataDir: "./tmp",
         });
     }
@@ -34,7 +36,6 @@ export class Scraper {
         await login(page);
         await scrapFolder(page);
 
-        await page.waitFor(20_000);
         // await page.waitFor(180_000);
         await page.close();
         await this.browser.close();
