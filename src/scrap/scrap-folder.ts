@@ -1,46 +1,48 @@
 import { ElementHandle, Page } from "puppeteer";
+import { screenShot } from ".";
 
 const driveUrl = String(process.env["drive_url"]);
 
 export async function scrapFolder(page: Page) {
     const main = await page.waitForSelector('div[data-view-type="1"]');
     const folders = (await main?.$$("div[data-target=doc]")) || [];
-    console.log("FOLDERS", folders?.length);
+
     let count = 3;
-    while (count < folders.length) {
+    console.time("scrap routine");
+    while (count === 3) {
         const main = await page.waitForSelector('div[data-view-type="1"]');
         const folders = (await main?.$$("div[data-target=doc]")) || [];
         const folder = folders[count];
         await folder.click({ clickCount: 2 });
-        console.log("inside LOOP ->>>>", count);
-        await scrapSubfolder(page, folder, count);
+        await scrapSubfolder(page, folder);
         count++;
-        console.log("\n\n");
     }
+    console.timeEnd("scrap routine");
 }
 
-async function scrapSubfolder(
-    page: Page,
-    folder: ElementHandle,
-    folderCount: number
-) {
-    await page.waitFor(3000);
-    const mainSelector = 'div[data-view-type="1"]';
-    const main = await page.waitForSelector(mainSelector);
-    const thumbs = (await main?.$$("div[role=gridcell]")) || [];
+async function scrapSubfolder(page: Page, folder: ElementHandle) {
+    await page.waitFor(1000);
 
-    const sources = [];
-    let sourceCount = -1;
+    const mainSelector = 'div[data-view-type="1"]';
+    const thumbSelector = "div[role=gridcell]";
+
+    const main = await page.waitForSelector(mainSelector);
+    await page.waitForSelector(thumbSelector, { timeout: 3000 });
+
+    let thumbs = (await main?.$$(thumbSelector)) || [];
+
+    const sources: string[] = [];
+    let sourceCount = 0;
 
     while (sourceCount <= thumbs.length - 1) {
-        sourceCount++;
-        console.log("COUNT COUNT", sourceCount);
         const main = await page.waitForSelector(mainSelector);
-        const thumbs = (await main?.$$("div[role=gridcell]")) || [];
+        await page.waitForSelector(thumbSelector);
+        thumbs = (await main?.$$(thumbSelector)) || [];
 
         const thumb = thumbs[sourceCount];
+
         console.log(
-            "LIST OF thumbs",
+            "LIST OF files to open",
             `${thumbs.indexOf(thumb)}/${thumbs.length}`
         );
 
@@ -48,27 +50,34 @@ async function scrapSubfolder(
             await thumb.click({ clickCount: 2 });
         }
 
-        await page.waitFor(3400);
+        await page.waitFor(1000);
         const nodeListSelector = 'img[alt~="Exibindo"].a-b-ta-Ua';
         const openFiles = await page.$$(nodeListSelector);
-        thumbs.push(...(openFiles as ElementHandle[]));
 
         for (const el of openFiles) {
             const srcProperty = await el.getProperty("src");
             const src: string = await srcProperty.jsonValue();
-            sources.push(src);
+            if (sources.indexOf(src) === -1) sources.push(src);
         }
 
         await page.keyboard.press("Escape", {
-            delay: 3000,
+            delay: 1000,
         });
 
-        console.log("THUMBS -> ", thumbs.length);
-        console.log("SOURCES => ", sources.length);
-        console.log("COUNT ->", sourceCount);
-        //fix update count based on new discovered thumbs
+        sourceCount++;
     }
 
-    console.log(JSON.stringify(sources));
+    console.log(sources);
     await page.goto(driveUrl);
 }
+
+// nodeListSelector = document.querySelectorAll('img[alt~="Exibindo"].a-b-ta-Ua');
+// openFiles = Array.from(nodeListSelector)
+// var sources = []
+// for (var el of openFiles) {
+//     var src = el.src;
+//      if (sources.indexOf(el) === -1) {
+//          sources.push(src);
+//          console.log(el);
+//      }
+// }
