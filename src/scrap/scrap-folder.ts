@@ -20,7 +20,7 @@ export async function scrapFolder(page: Page) {
 }
 
 async function scrapSubfolder(page: Page, folder: ElementHandle) {
-    await page.waitFor(1000);
+    await page.waitFor(1300);
 
     const mainSelector = 'div[data-view-type="1"]';
     const thumbSelector = "div[role=gridcell]";
