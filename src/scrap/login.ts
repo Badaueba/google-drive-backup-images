@@ -1,4 +1,4 @@
-import { Page } from "puppeteer";
+import { Page, PuppeteerErrors } from "puppeteer";
 
 const email = String(process.env["user_email"]);
 const password = String(process.env["user_password"]);
@@ -10,28 +10,45 @@ export async function login(page: Page) {
     if (pageUrl.includes(driveBaseUrl)) return;
 
     const emailSelector = 'input[type="email"]';
-    const passSelector = 'input[type="password"]';
+    const passSelector = 'input[name="Passwd"]';
 
-    await page.waitForSelector(emailSelector, { timeout: 5000 });
+    const emailInterval = setInterval(async () => {
+        try {
+            const emailElement = await page.waitForSelector(emailSelector, {
+                timeout: 1000,
+            });
+            if (emailElement) {
+                clearInterval(emailInterval);
 
-    await page.click(emailSelector);
-    await page.type(emailSelector, email);
-    await page.keyboard.press("Enter");
+                await page.click(emailSelector);
+                await page.type(emailSelector, email);
+                await page.keyboard.press("Enter");
+            }
+        } catch (err) {
+            const error = err as Error;
+            console.log(error.message);
+        }
+    }, 500);
 
     const passInterval = setInterval(async () => {
         try {
             const passElement = await page.waitForSelector(passSelector, {
                 timeout: 1000,
             });
-            if (passElement) clearInterval(passInterval);
-            console.log();
+            console.log("here");
+            if (passElement) {
+                console.log(passElement);
 
-            await page.click(passSelector);
-            await page.type(passSelector, password);
+                clearInterval(passInterval);
 
-            await page.keyboard.press("Enter");
-        } catch (e) {
-            console.log(e);
+                await passElement.click();
+                await page.type(passSelector, password);
+
+                await page.keyboard.press("Enter");
+            }
+        } catch (err) {
+            const error = err as Error;
+            console.log(error.message);
         }
-    }, 1000);
+    }, 500);
 }

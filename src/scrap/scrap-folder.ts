@@ -4,6 +4,7 @@ const driveUrl = String(process.env["drive_url"]);
 
 export async function scrapFolder(page: Page) {
     const main = await page.waitForSelector('div[data-view-type="1"]');
+
     const folders = (await main?.$$("div[data-target=doc]")) || [];
 
     let count = 0;
@@ -20,7 +21,7 @@ export async function scrapFolder(page: Page) {
 }
 
 async function scrapSubfolder(page: Page, folder: ElementHandle) {
-    await page.waitFor(1300);
+    await page.waitFor(1000);
 
     const mainSelector = 'div[data-view-type="1"]';
     const thumbSelector = "div[role=gridcell]";
@@ -55,7 +56,7 @@ async function scrapSubfolder(page: Page, folder: ElementHandle) {
             await thumb.click({ clickCount: 2, delay: 500 });
         }
 
-        await page.waitFor(1600);
+        await page.waitFor(1000);
 
         const alternativeList = await page.$$eval(nodeListSelector, (files) => {
             const srcList = files.map((file) => (file as HTMLImageElement).src);

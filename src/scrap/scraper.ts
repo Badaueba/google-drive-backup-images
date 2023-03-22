@@ -5,7 +5,7 @@ import { login } from ".";
 import { scrapFolder } from "./scrap-folder";
 
 const background = process.env["background_task"] === "true" ? true : false;
-console.log("bak", background);
+
 puppeteerExtra.use(extra());
 
 export class Scraper {
