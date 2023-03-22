@@ -5,12 +5,12 @@ const password = String(process.env["user_password"]);
 const driveBaseUrl = String(process.env["drive_base_url"]);
 
 export async function login(page: Page) {
-    const pageUrl = await page.url();
+    const pageUrl = page.url();
     //already logged in
     if (pageUrl.includes(driveBaseUrl)) return;
 
     const emailSelector = 'input[type="email"]';
-    const passSelector = 'input[name="password"]';
+    const passSelector = 'input[type="password"]';
 
     await page.waitForSelector(emailSelector, { timeout: 5000 });
 
@@ -18,19 +18,20 @@ export async function login(page: Page) {
     await page.type(emailSelector, email);
     await page.keyboard.press("Enter");
 
-    await page.waitForSelector(passSelector);
-    await page.evaluate(
-        (selector, value) => {
-            let element = document.querySelector(selector) as HTMLInputElement;
-            element.value = value;
-            element.select();
-            let btn = document.querySelector(
-                "#passwordNext"
-            ) as HTMLButtonElement;
-            btn.click();
-            return;
-        },
-        passSelector,
-        password
-    );
+    const passInterval = setInterval(async () => {
+        try {
+            const passElement = await page.waitForSelector(passSelector, {
+                timeout: 1000,
+            });
+            if (passElement) clearInterval(passInterval);
+            console.log();
+
+            await page.click(passSelector);
+            await page.type(passSelector, password);
+
+            await page.keyboard.press("Enter");
+        } catch (e) {
+            console.log(e);
+        }
+    }, 1000);
 }
